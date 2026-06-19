@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/vlog.dart';
@@ -22,25 +24,43 @@ class VlogCard extends StatelessWidget {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 250),
       margin: const EdgeInsets.only(bottom: 12),
-      child: Card(
+      child: Material(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(22),
         elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
-        ),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(18),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
+          borderRadius: BorderRadius.circular(22),
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(22),
+              boxShadow: const [
+                BoxShadow(
+                  blurRadius: 18,
+                  color: Colors.black12,
+                  offset: Offset(0, 6),
+                ),
+              ],
+            ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CircleAvatar(
-                  radius: 26,
-                  backgroundColor: _statusColor(vlog.status).withValues(alpha: 0.15),
-                  child: Icon(
-                    _statusIcon(vlog.status),
-                    color: _statusColor(vlog.status),
+                Hero(
+                  tag: 'thumb-${vlog.id}',
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(18),
+                    child: SizedBox(
+                      width: 110,
+                      height: 110,
+                      child: vlog.thumbnailPath.isNotEmpty
+                          ? Image.file(
+                              File(vlog.thumbnailPath),
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, _, _) => _fallbackThumbnail(context),
+                            )
+                          : _fallbackThumbnail(context),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -53,6 +73,8 @@ class VlogCard extends StatelessWidget {
                           Expanded(
                             child: Text(
                               vlog.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: theme.textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.bold,
                               ),
@@ -61,28 +83,26 @@ class VlogCard extends StatelessWidget {
                           IconButton(
                             onPressed: onFavoriteToggle,
                             icon: Icon(
-                              vlog.isFavorite
-                                  ? Icons.favorite
-                                  : Icons.favorite_border,
+                              vlog.isFavorite ? Icons.favorite : Icons.favorite_border,
                               color: vlog.isFavorite ? Colors.red : null,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 4),
                       Text(
                         vlog.description,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodySmall,
+                        style: theme.textTheme.bodyMedium,
                       ),
                       const SizedBox(height: 10),
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
                         children: [
-                          _infoChip(vlog.category, Icons.category),
-                          _infoChip(vlog.status, Icons.radio_button_checked),
+                          _infoChip(vlog.platform, Icons.ondemand_video_outlined),
+                          _infoChip(vlog.status, Icons.circle, color: _statusColor(vlog.status)),
                           _infoChip(
                             dateFormat.format(vlog.uploadDate),
                             Icons.calendar_today,
@@ -100,17 +120,30 @@ class VlogCard extends StatelessWidget {
     );
   }
 
-  Widget _infoChip(String label, IconData icon) {
+  Widget _fallbackThumbnail(BuildContext context) {
+    return Container(
+      color: Theme.of(context).colorScheme.primaryContainer,
+      child: Center(
+        child: Icon(
+          Icons.image_outlined,
+          size: 48,
+          color: Theme.of(context).colorScheme.onPrimaryContainer,
+        ),
+      ),
+    );
+  }
+
+  Widget _infoChip(String label, IconData icon, {Color? color}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
+        color: color != null ? color.withValues(alpha: 0.08) : Colors.grey.shade100,
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14),
+          Icon(icon, size: 14, color: color),
           const SizedBox(width: 4),
           Text(label, style: const TextStyle(fontSize: 12)),
         ],
@@ -121,30 +154,19 @@ class VlogCard extends StatelessWidget {
   Color _statusColor(String status) {
     switch (status) {
       case 'Idea':
+        return Colors.amber;
+      case 'Draft':
         return Colors.blue;
       case 'Recording':
-        return Colors.orange;
+        return Colors.indigo;
       case 'Editing':
         return Colors.purple;
-      case 'Uploaded':
+      case 'Scheduled':
+        return Colors.orange;
+      case 'Published':
         return Colors.green;
       default:
         return Colors.grey;
-    }
-  }
-
-  IconData _statusIcon(String status) {
-    switch (status) {
-      case 'Idea':
-        return Icons.lightbulb;
-      case 'Recording':
-        return Icons.videocam;
-      case 'Editing':
-        return Icons.edit;
-      case 'Uploaded':
-        return Icons.cloud_done;
-      default:
-        return Icons.help;
     }
   }
 }

@@ -4,32 +4,69 @@ import '../models/vlog.dart';
 import 'hive_service.dart';
 
 class VlogProvider extends ChangeNotifier {
+  static const List<String> statusOptions = [
+    'All',
+    'Idea',
+    'Draft',
+    'Recording',
+    'Editing',
+    'Scheduled',
+    'Published'
+  ];
+
+  static const List<String> platformOptions = [
+    'All',
+    'YouTube',
+    'Instagram',
+    'Facebook',
+    'TikTok',
+    'LinkedIn',
+    'Blog'
+  ];
+
   final List<Vlog> _vlogs = [];
   String _searchQuery = '';
   String _selectedStatus = 'All';
-  bool _isSortedByDate = false;
+  String _selectedPlatform = 'All';
+  bool _isSortedByDate = true;
 
   List<Vlog> get vlogs => _vlogs;
   String get searchQuery => _searchQuery;
   String get selectedStatus => _selectedStatus;
+  String get selectedPlatform => _selectedPlatform;
   bool get isSortedByDate => _isSortedByDate;
 
   List<Vlog> get filteredVlogs {
-    final query = _searchQuery.toLowerCase();
+    final query = _searchQuery.trim().toLowerCase();
 
-    return _vlogs.where((vlog) {
-      final matchesSearch = vlog.title.toLowerCase().contains(query) ||
-          vlog.description.toLowerCase().contains(query);
+    final result = _vlogs.where((vlog) {
+      final matchesSearch = query.isEmpty ||
+          vlog.title.toLowerCase().contains(query) ||
+          vlog.description.toLowerCase().contains(query) ||
+          vlog.category.toLowerCase().contains(query);
       final matchesStatus = _selectedStatus == 'All' || vlog.status == _selectedStatus;
-      return matchesSearch && matchesStatus;
+      final matchesPlatform =
+          _selectedPlatform == 'All' || vlog.platform == _selectedPlatform;
+      return matchesSearch && matchesStatus && matchesPlatform;
     }).toList()
       ..sort((a, b) {
         if (_isSortedByDate) {
-          return a.uploadDate.compareTo(b.uploadDate);
+          return b.uploadDate.compareTo(a.uploadDate);
         }
-        return b.uploadDate.compareTo(a.uploadDate);
+        return a.uploadDate.compareTo(b.uploadDate);
       });
+
+    return result;
   }
+
+  List<Vlog> get favoriteVlogs => _vlogs.where((vlog) => vlog.isFavorite).toList();
+
+  int get totalContent => _vlogs.length;
+
+  int get ideasCount => _vlogs.where((vlog) => vlog.status == 'Idea').length;
+  int get draftsCount => _vlogs.where((vlog) => vlog.status == 'Draft').length;
+  int get scheduledCount => _vlogs.where((vlog) => vlog.status == 'Scheduled').length;
+  int get publishedCount => _vlogs.where((vlog) => vlog.status == 'Published').length;
 
   Future<void> loadVlogs() async {
     final stored = await HiveService.getAllVlogs();
@@ -77,6 +114,11 @@ class VlogProvider extends ChangeNotifier {
 
   void setSelectedStatus(String value) {
     _selectedStatus = value;
+    notifyListeners();
+  }
+
+  void setSelectedPlatform(String value) {
+    _selectedPlatform = value;
     notifyListeners();
   }
 

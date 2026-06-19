@@ -3,7 +3,7 @@ import 'package:path_provider/path_provider.dart';
 import '../models/vlog.dart';
 
 class HiveService {
-  static const String _boxName = 'vlogs';
+  static const String _boxName = 'creator_flow_vlogs';
   static bool _isInitialized = false;
   static late Box<Vlog> _box;
 

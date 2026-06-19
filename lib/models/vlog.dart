@@ -25,6 +25,12 @@ class Vlog extends HiveObject {
   @HiveField(6)
   bool isFavorite;
 
+  @HiveField(7)
+  String platform;
+
+  @HiveField(8)
+  String thumbnailPath;
+
   Vlog({
     required this.id,
     required this.title,
@@ -33,6 +39,8 @@ class Vlog extends HiveObject {
     required this.status,
     required this.uploadDate,
     this.isFavorite = false,
+    this.platform = 'YouTube',
+    this.thumbnailPath = '',
   });
 
   Vlog copyWith({
@@ -43,6 +51,8 @@ class Vlog extends HiveObject {
     String? status,
     DateTime? uploadDate,
     bool? isFavorite,
+    String? platform,
+    String? thumbnailPath,
   }) {
     return Vlog(
       id: id ?? this.id,
@@ -52,6 +62,8 @@ class Vlog extends HiveObject {
       status: status ?? this.status,
       uploadDate: uploadDate ?? this.uploadDate,
       isFavorite: isFavorite ?? this.isFavorite,
+      platform: platform ?? this.platform,
+      thumbnailPath: thumbnailPath ?? this.thumbnailPath,
     );
   }
 }
